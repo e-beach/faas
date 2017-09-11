@@ -70,6 +70,31 @@ func MakeProxy(metrics metrics.MetricOptions, wildcard bool, client *client.Clie
 				w.Write([]byte("Provide an x-function header or valid route /function/function_name."))
 			}
 
+		} else if r.Method == "GET" {
+			logger.Infoln(r.Header)
+
+			xfunctionHeader := r.Header["X-Function"]
+			if len(xfunctionHeader) > 0 {
+				logger.Infoln(xfunctionHeader)
+			}
+
+			// getServiceName
+			var serviceName string
+			if wildcard {
+				vars := mux.Vars(r)
+				name := vars["name"]
+				serviceName = name
+			} else if len(xfunctionHeader) > 0 {
+				serviceName = xfunctionHeader[0]
+			}
+
+			if len(serviceName) > 0 {
+				lookupInvoke(w, r, metrics, serviceName, client, logger, &proxyClient)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte("Provide an x-function header or valid route /function/function_name."))
+			}
+
 		} else {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}

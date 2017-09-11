@@ -11,6 +11,8 @@ RUN chmod +x /usr/bin/fwatchdog
 ENV fprocess="python handler.py"
 
 COPY handler.py .
+COPY app.py .
+COPY __init__.py .
 COPY templates templates
 ENV cgi_body=true
 ENV cgi_headers=true

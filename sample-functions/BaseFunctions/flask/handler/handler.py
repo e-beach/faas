@@ -1,20 +1,16 @@
 #!/usr/bin/python
 from wsgiref.handlers import CGIHandler
-from flask import render_template
-from flask import Flask
 import os
-from flask import request
+from app import app
+import urllib.parse as urlparse
 
-app = Flask(__name__)
+url = "http://localhost:8080%s%s" % (os.getenv("Http_Path", default="/hello"), os.getenv("Http_Query", default=""))
+query_params = urlparse.urlsplit(url).query
+dict_query_params = dict(urlparse.parse_qsl(urlparse.urlsplit(url).query))
+whole_path = urlparse.urlparse(url).path
+split_path = whole_path.split('/')
+route_path = split_path[(len(split_path)-1)]
 
-@app.route('/hello/')
-def hello():
-    name = "test"
-    return render_template('hello.html', name = name)
-    # if "name" in request.args:
-    #     return render_template('hello.html', name=request.args["name"])
-    # else:
-    #     return render_template('hello.html', name="stranger")
 
 class ProxyFix(object):
     def __init__(self, app):
@@ -25,8 +21,8 @@ class ProxyFix(object):
         environ['SERVER_PORT'] = "8080"
         environ['REQUEST_METHOD'] = "GET"
         environ['SCRIPT_NAME'] = ""
-        environ['PATH_INFO'] = "/hello/"
-        environ['QUERY_STRING'] = os.getenv("Http_Query", default="/")
+        environ['PATH_INFO'] = "/%s" % route_path
+        environ['QUERY_STRING'] = query_params
         environ['SERVER_PROTOCOL'] = "HTTP/1.1"
         return self.app(environ, start_response)
 
