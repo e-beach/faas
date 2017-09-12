@@ -2,14 +2,15 @@
 from wsgiref.handlers import CGIHandler
 import os
 from app import app
-import urllib.parse as urlparse
 
-url = "http://localhost:8080%s%s" % (os.getenv("Http_Path", default="/hello"), os.getenv("Http_Query", default=""))
-query_params = urlparse.urlsplit(url).query
-dict_query_params = dict(urlparse.parse_qsl(urlparse.urlsplit(url).query))
-whole_path = urlparse.urlparse(url).path
+query_params = os.getenv("Http_Query", default="")
+whole_path = os.getenv("Http_Path", default="")
 split_path = whole_path.split('/')
-route_path = split_path[(len(split_path)-1)]
+if len(split_path) > 3:
+    route_path = '/' + '/'.join(split_path[3:])
+else:
+    route_path = ""
+http_method = os.getenv("Http_Method", default="GET")
 
 
 class ProxyFix(object):
@@ -19,7 +20,7 @@ class ProxyFix(object):
     def __call__(self, environ, start_response):
         environ['SERVER_NAME'] = "localhost"
         environ['SERVER_PORT'] = "8080"
-        environ['REQUEST_METHOD'] = "GET"
+        environ['REQUEST_METHOD'] = http_method
         environ['SCRIPT_NAME'] = ""
         environ['PATH_INFO'] = "/%s" % route_path
         environ['QUERY_STRING'] = query_params
@@ -29,4 +30,7 @@ class ProxyFix(object):
 if __name__ == '__main__':
     app.wsgi_app = ProxyFix(app.wsgi_app)
     CGIHandler().run(app)
+    # print(whole_path)
+    # print(split_path)
+    # print(route_path)
 

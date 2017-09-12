@@ -1,4 +1,4 @@
-FROM python:2.7-alpine
+FROM python:alpine
 
 WORKDIR /root/
 COPY requirements.txt   .

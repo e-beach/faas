@@ -57,7 +57,12 @@ func MakeProxy(metrics metrics.MetricOptions, wildcard bool, client *client.Clie
 			var serviceName string
 			if wildcard {
 				vars := mux.Vars(r)
-				name := vars["name"]
+				var name string
+				if len(vars["route"]) > 0 {
+					name = vars["name"] + "/" + vars["subname"]
+				} else {
+					name = vars["name"]
+				}
 				serviceName = name
 			} else if len(xfunctionHeader) > 0 {
 				serviceName = xfunctionHeader[0]
@@ -82,7 +87,72 @@ func MakeProxy(metrics metrics.MetricOptions, wildcard bool, client *client.Clie
 			var serviceName string
 			if wildcard {
 				vars := mux.Vars(r)
-				name := vars["name"]
+				var name string
+				if len(vars["route"]) > 0 {
+					name = vars["name"] + "/" + vars["subname"]
+				} else {
+					name = vars["name"]
+				}
+				serviceName = name
+			} else if len(xfunctionHeader) > 0 {
+				serviceName = xfunctionHeader[0]
+			}
+
+			if len(serviceName) > 0 {
+				lookupInvoke(w, r, metrics, serviceName, client, logger, &proxyClient)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte("Provide an x-function header or valid route /function/function_name."))
+			}
+
+		} else if r.Method == "PUT" {
+			logger.Infoln(r.Header)
+
+			xfunctionHeader := r.Header["X-Function"]
+			if len(xfunctionHeader) > 0 {
+				logger.Infoln(xfunctionHeader)
+			}
+
+			// getServiceName
+			var serviceName string
+			if wildcard {
+				vars := mux.Vars(r)
+				var name string
+				if len(vars["route"]) > 0 {
+					name = vars["name"] + "/" + vars["subname"]
+				} else {
+					name = vars["name"]
+				}
+				serviceName = name
+			} else if len(xfunctionHeader) > 0 {
+				serviceName = xfunctionHeader[0]
+			}
+
+			if len(serviceName) > 0 {
+				lookupInvoke(w, r, metrics, serviceName, client, logger, &proxyClient)
+			} else {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte("Provide an x-function header or valid route /function/function_name."))
+			}
+
+		} else if r.Method == "DELETE" {
+			logger.Infoln(r.Header)
+
+			xfunctionHeader := r.Header["X-Function"]
+			if len(xfunctionHeader) > 0 {
+				logger.Infoln(xfunctionHeader)
+			}
+
+			// getServiceName
+			var serviceName string
+			if wildcard {
+				vars := mux.Vars(r)
+				var name string
+				if len(vars["route"]) > 0 {
+					name = vars["name"] + "/" + vars["subname"]
+				} else {
+					name = vars["name"]
+				}
 				serviceName = name
 			} else if len(xfunctionHeader) > 0 {
 				serviceName = xfunctionHeader[0]
@@ -165,9 +235,10 @@ func invokeService(w http.ResponseWriter, r *http.Request, metrics metrics.Metri
 	url := forwardReq.ToURL(addr, watchdogPort)
 
 	contentType := r.Header.Get("Content-Type")
+	method := r.Method
 	fmt.Printf("[%s] Forwarding request [%s] to: %s\n", stamp, contentType, url)
 
-	request, err := http.NewRequest("POST", url, bytes.NewReader(requestBody))
+	request, err := http.NewRequest(method, url, bytes.NewReader(requestBody))
 
 	copyHeaders(&request.Header, &r.Header)
 

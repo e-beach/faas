@@ -121,6 +121,7 @@ func main() {
 	// r.StrictSlash(false)	// This didn't work, so register routes twice.
 	r.HandleFunc("/function/{name:[-a-zA-Z_0-9]+}", faasHandlers.Proxy)
 	r.HandleFunc("/function/{name:[-a-zA-Z_0-9]+}/", faasHandlers.Proxy)
+	r.HandleFunc(`/function/{name:[-a-zA-Z_0-9]+}/{subname:[a-zA-Z0-9=\-\/]+}`, faasHandlers.Proxy)
 
 	r.HandleFunc("/system/alert", faasHandlers.Alert)
 	r.HandleFunc("/system/functions", listFunctions).Methods("GET")
