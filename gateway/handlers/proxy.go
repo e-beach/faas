@@ -45,7 +45,13 @@ func MakeProxy(metrics metrics.MetricOptions, wildcard bool, client *client.Clie
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		if r.Method == "POST" {
+		switch r.Method {
+		case
+			"GET",
+			"POST",
+			"PUT",
+			"DELETE",
+			"UPDATE":
 			logger.Infoln(r.Header)
 
 			xfunctionHeader := r.Header["X-Function"]
@@ -74,99 +80,9 @@ func MakeProxy(metrics metrics.MetricOptions, wildcard bool, client *client.Clie
 				w.WriteHeader(http.StatusBadRequest)
 				w.Write([]byte("Provide an x-function header or valid route /function/function_name."))
 			}
-
-		} else if r.Method == "GET" {
-			logger.Infoln(r.Header)
-
-			xfunctionHeader := r.Header["X-Function"]
-			if len(xfunctionHeader) > 0 {
-				logger.Infoln(xfunctionHeader)
-			}
-
-			// getServiceName
-			var serviceName string
-			if wildcard {
-				vars := mux.Vars(r)
-				var name string
-				if len(vars["route"]) > 0 {
-					name = vars["name"] + "/" + vars["subname"]
-				} else {
-					name = vars["name"]
-				}
-				serviceName = name
-			} else if len(xfunctionHeader) > 0 {
-				serviceName = xfunctionHeader[0]
-			}
-
-			if len(serviceName) > 0 {
-				lookupInvoke(w, r, metrics, serviceName, client, logger, &proxyClient)
-			} else {
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte("Provide an x-function header or valid route /function/function_name."))
-			}
-
-		} else if r.Method == "PUT" {
-			logger.Infoln(r.Header)
-
-			xfunctionHeader := r.Header["X-Function"]
-			if len(xfunctionHeader) > 0 {
-				logger.Infoln(xfunctionHeader)
-			}
-
-			// getServiceName
-			var serviceName string
-			if wildcard {
-				vars := mux.Vars(r)
-				var name string
-				if len(vars["route"]) > 0 {
-					name = vars["name"] + "/" + vars["subname"]
-				} else {
-					name = vars["name"]
-				}
-				serviceName = name
-			} else if len(xfunctionHeader) > 0 {
-				serviceName = xfunctionHeader[0]
-			}
-
-			if len(serviceName) > 0 {
-				lookupInvoke(w, r, metrics, serviceName, client, logger, &proxyClient)
-			} else {
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte("Provide an x-function header or valid route /function/function_name."))
-			}
-
-		} else if r.Method == "DELETE" {
-			logger.Infoln(r.Header)
-
-			xfunctionHeader := r.Header["X-Function"]
-			if len(xfunctionHeader) > 0 {
-				logger.Infoln(xfunctionHeader)
-			}
-
-			// getServiceName
-			var serviceName string
-			if wildcard {
-				vars := mux.Vars(r)
-				var name string
-				if len(vars["route"]) > 0 {
-					name = vars["name"] + "/" + vars["subname"]
-				} else {
-					name = vars["name"]
-				}
-				serviceName = name
-			} else if len(xfunctionHeader) > 0 {
-				serviceName = xfunctionHeader[0]
-			}
-
-			if len(serviceName) > 0 {
-				lookupInvoke(w, r, metrics, serviceName, client, logger, &proxyClient)
-			} else {
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte("Provide an x-function header or valid route /function/function_name."))
-			}
-
-		} else {
+		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
+
 		}
 	}
 }

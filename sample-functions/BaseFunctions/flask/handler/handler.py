@@ -9,7 +9,7 @@ split_path = whole_path.split('/')
 if len(split_path) > 3:
     route_path = '/' + '/'.join(split_path[3:])
 else:
-    route_path = ""
+    route_path = "/"
 http_method = os.getenv("Http_Method", default="GET")
 
 
@@ -22,7 +22,7 @@ class ProxyFix(object):
         environ['SERVER_PORT'] = "8080"
         environ['REQUEST_METHOD'] = http_method
         environ['SCRIPT_NAME'] = ""
-        environ['PATH_INFO'] = "/%s" % route_path
+        environ['PATH_INFO'] = route_path
         environ['QUERY_STRING'] = query_params
         environ['SERVER_PROTOCOL'] = "HTTP/1.1"
         return self.app(environ, start_response)
@@ -30,7 +30,5 @@ class ProxyFix(object):
 if __name__ == '__main__':
     app.wsgi_app = ProxyFix(app.wsgi_app)
     CGIHandler().run(app)
-    # print(whole_path)
-    # print(split_path)
-    # print(route_path)
+
 
